@@ -1,15 +1,15 @@
-import "./App.css";
+import { useEffect, useState } from "react";
 import Description from "../Description/Description";
 import Options from "../Options/Options";
-import { useState, useEffect } from "react";
 import Feedback from "../Feedback/Feedback";
 import Notification from "../Notification/Notification";
 
-function App() {
-  const [values, setValues] = useState(() => {
-    const savedValues = window.localStorage.getItem("saved-values");
-    if (savedValues !== null) {
-      return JSON.parse(savedValues);
+export default function App() {
+  const [state, setState] = useState(() => {
+    const savedFeedback = localStorage.getItem("feedback");
+
+    if (savedFeedback !== null) {
+      return JSON.parse(savedFeedback);
     }
     return {
       good: 0,
@@ -19,48 +19,43 @@ function App() {
   });
 
   useEffect(() => {
-    window.localStorage.setItem("saved-values", JSON.stringify(values));
-  }, [values]);
+    localStorage.setItem("feedback", JSON.stringify(state));
+  }, [state]);
 
   const updateFeedback = (feedbackType) => {
-    setValues((prevValues) => {
-      const updatedValues = {
-        ...prevValues,
-        [feedbackType]: prevValues[feedbackType] + 1,
+    setState((prevState) => {
+      return {
+        ...prevState,
+        [feedbackType]: prevState[feedbackType] + 1,
       };
-      return updatedValues;
     });
   };
 
   const resetFeedback = () => {
-    const resetValues = {
+    setState({
       good: 0,
       neutral: 0,
       bad: 0,
-    };
-    setValues(resetValues);
+    });
   };
 
-  const totalFeedback = Object.values(values).reduce(
-    (acc, curr) => acc + curr,
-    0
-  );
-  const positiveFeedback =
-    totalFeedback > 0 ? Math.round((values.good / totalFeedback) * 100) : 0;
+  const totalFeedback = state.good + state.neutral + state.bad;
+  const positiveFeedbacks = Math.round((state.good / totalFeedback) * 100);
 
   return (
     <>
       <Description />
       <Options
-        setValue={updateFeedback}
-        resetValues={resetFeedback}
-        feedbackcount={totalFeedback}
+        clickHandler={updateFeedback}
+        reset={resetFeedback}
+        total={totalFeedback}
       />
+      <br />
       {totalFeedback > 0 ? (
         <Feedback
-          value={values}
-          totalfeedback={totalFeedback}
-          positivefeedback={positiveFeedback}
+          state={state}
+          total={totalFeedback}
+          positive={positiveFeedbacks}
         />
       ) : (
         <Notification />
@@ -68,5 +63,3 @@ function App() {
     </>
   );
 }
-
-export default App;
